@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<link rel="manifest" href="manifest.webmanifest">
+<title>OS Toolsmith</title>
+<style>
+:root{--bg:#0b0f14;--panel:#111821;--panel2:#17212c;--text:#edf3f8;--muted:#91a0ae;--accent:#5aa9ff;--danger:#ff6575;--border:#263342}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,BlinkMacSystemFont,sans-serif}
+header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--border);background:#0d131a;position:sticky;top:0;z-index:2}
+h1{font-size:17px;margin:0}.badge{font-size:11px;color:#8fd3ff;border:1px solid #285579;padding:3px 7px;border-radius:999px;margin-left:7px}
+main{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 58px)}
+aside{border-right:1px solid var(--border);padding:12px;background:#0e151d}.nav{display:block;width:100%;padding:10px;border:0;background:transparent;color:var(--text);text-align:left;border-radius:8px;margin-bottom:4px}.nav:hover,.nav.active{background:var(--panel2)}
+section{padding:16px;max-width:1100px;width:100%;margin:auto}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}.muted{color:var(--muted)}button{background:#1b2a3a;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 12px}button.primary{background:#1769aa;border-color:#2786d0}button.danger{background:#4b1820;border-color:#78313b}input,textarea,select{width:100%;background:#0a0f14;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px}textarea{min-height:280px;font:13px ui-monospace,SFMono-Regular,Menlo,monospace}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.terminal{background:#050709;border:1px solid var(--border);border-radius:10px;padding:12px;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;min-height:310px;white-space:pre-wrap}.prompt{color:#6fe58c}.hidden{display:none}.file{padding:8px;border-radius:7px}.file:hover{background:var(--panel2)}
+@media(max-width:700px){main{display:block}aside{border-right:0;border-bottom:1px solid var(--border);display:flex;overflow:auto;gap:4px}.nav{min-width:max-content;margin:0}section{padding:12px}}
+</style>
+</head>
+<body>
+<header><h1>OS Toolsmith <span class="badge">ADMIN-READY</span></h1><div class="row"><button id="installBtn" class="primary">Install</button></div></header>
+<main>
+<aside>
+<button class="nav active" data-page="dashboard">Dashboard</button>
+<button class="nav" data-page="editor">Code Editor</button>
+<button class="nav" data-page="terminal">Terminal</button>
+<button class="nav" data-page="projects">Projects</button>
+<button class="nav" data-page="admin">Admin</button>
+</aside>
+<div id="app"></div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
