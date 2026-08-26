@@ -1,0 +1,93 @@
+const express = require('express');
+const http = require('http');
+const { WebSocketServer } = require('ws');
+const pty = require('node-pty');
+const jwt = require('jsonwebtoken');
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ noServer: true });
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-change-me';
+
+// Basic health check
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'secured-isolation-active' });
+});
+
+// Handle WebSocket upgrade with Auth check
+server.on('upgrade', (request, socket, head) => {
+  const urlParams = new URLSearchParams(request.url.split('?')[1]);
+  const token = urlParams.get('token');
+
+  if (!token) {
+    socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+    socket.destroy();
+    return;
+  }
+
+  try {
+    // Verify user token before allowing PTY access
+    const decoded = jwt.verify(token, JWT_SECRET);
+    request.user = decoded;
+    
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } catch (err) {
+    socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+    socket.destroy();
+  }
+});
+
+// WebSocket Connection & PTY Lifecycle
+wss.on('connection', (ws, req) => {
+  console.log(`Authenticated session started for user: ${req.user.username}`);
+
+  // Spawn shell inside the isolated container environment
+  const shell = process.env.SHELL || 'bash';
+  const ptyProcess = pty.spawn(shell, [], {
+    name: 'xterm-256color',
+    cols: 80,
+    rows: 30,
+    cwd: '/workspace', // Restricted working directory inside container
+    env: {
+      ...process.env,
+      HOME: '/workspace',
+      USER: req.user.username
+    }
+  });
+
+  // Stream PTY output to PWA terminal client
+  ptyProcess.onData((data) => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(data);
+    }
+  });
+
+  // Handle incoming data/commands and resizes from PWA
+  ws.on('message', (msg) => {
+    try {
+      const message = JSON.parse(msg);
+      if (message.type === 'input') {
+        ptyProcess.write(message.data);
+      } else if (message.type === 'resize') {
+        ptyProcess.resize(message.cols, message.rows);
+      }
+    } catch {
+      // Fallback if raw string is sent
+      ptyProcess.write(msg);
+    }
+  });
+
+  // Cleanup when client disconnects
+  ws.on('close', () => {
+    ptyProcess.kill();
+    console.log(`Session ended for user: ${req.user.username}`);
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Secure backend gateway running on port ${PORT}`);
+});
