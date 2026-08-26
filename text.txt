@@ -1,0 +1,5 @@
+sandbox_mode = 'danger-full-access'
+
+[mcp_servers]
+[mcp_servers.playwright-live]
+command = 'cosyra-playwright-mcp'

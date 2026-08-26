@@ -1,0 +1,14 @@
+command": "/run/cosyra/hooks/gemini-event",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  },
+  "mcpServers": {
+    "playwright-live": {
+      "command": "cosyra-playwright-mcp"
+    }
+  }
+}
