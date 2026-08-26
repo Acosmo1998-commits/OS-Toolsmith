@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  toolsmith-backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - JWT_SECRET=your_production_jwt_secret_here
+    restart: unless-stopped
+    # Security safeguards: limit resources so arbitrary code can't starve the host
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.10'
+          memory: 128M
