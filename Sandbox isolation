@@ -1,0 +1,19 @@
+FROM node:20-alpine
+
+# Install build dependencies required for node-pty compilation
+RUN apk add --no-cache python3 make g++ bash
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --production
+
+COPY server.js ./
+
+# Create a non-root workspace user for complete system isolation
+RUN adduser -D -h /workspace toolsmith
+WORKDIR /workspace
+USER toolsmith
+
+EXPOSE 3000
+CMD ["node", "/app/server.js"]
