@@ -1,0 +1,28 @@
+    <!-- Header Navigation Tabs -->
+    <div id="status-bar">
+      <div class="status-indicator">
+        <div id="status-dot"></div>
+        <span id="status-text">Connected</span>
+      </div>
+      <div class="nav-tabs">
+        <button onclick="switchTab('terminal')" id="btn-terminal" class="active-tab">Terminal</button>
+        <button onclick="switchTab("files")" id="btn-files">Files</button>
+      </div>
+    </div>
+
+    <!-- Terminal Viewport Container -->
+    <div id="terminal-container" class="view-panel"></div>
+
+    <!-- File Browser & Editor Viewport Container -->
+    <div id="file-container" class="view-panel" style="display: none;">
+      <div id="file-breadcrumb">/workspace</div>
+      <div id="file-list"></div>
+      <div id="editor-pane" style="display: none;">
+        <div class="editor-toolbar">
+          <span id="editing-filename"></span>
+          <button onclick="saveFile()">Save</button>
+          <button onclick="closeEditor()">Back</button>
+        </div>
+        <textarea id="file-textarea"></textarea>
+      </div>
+    </div>
