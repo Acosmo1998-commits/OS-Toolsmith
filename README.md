@@ -27,3 +27,4 @@ A PWA cannot grant itself root/administrator privileges or install arbitrary nat
 5. Optional remote Linux backend with a WebSocket terminal.
 6. Device capability detection and explicit permission UI.
 7. Plugin/tool system with signed packages.
+delete file
