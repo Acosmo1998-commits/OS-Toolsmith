@@ -32,3 +32,183 @@ section{padding:16px;max-width:1100px;width:100%;margin:auto}.grid{display:grid;
 <script src="app.js"></script>
 </body>
 </html>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>OS Toolsmith Terminal</title>
+  
+  <!-- xterm.js CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+  
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #121212;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Top Status Bar Control Panel */
+    #status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background-color: #1e1e1e;
+      border-bottom: 1px solid #333;
+      font-size: 14px;
+      height: 40px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #f39c12; /* Default yellow: Connecting */
+      transition: background-color 0.3s ease;
+    }
+
+    /* Terminal Viewport Container */
+    #terminal-container {
+      flex: 1;
+      width: 100%;
+      height: calc(100% - 60px);
+      padding: 4px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Header Control Panel & Status -->
+    <div id="status-bar">
+      <div class="status-indicator">
+        <div id="status-dot"></div>
+        <span id="status-text">Connecting to backend...</span>
+      </div>
+      <div><strong>OS Toolsmith</strong></div>
+    </div>
+
+    <!-- Terminal Display -->
+    <div id="terminal-container"></div>
+  </div>
+
+  <!-- xterm.js and Fit Addon CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+
+  <script>
+    // 1. Initialize xterm.js Terminal optimized for mobile sizing
+    const term = new Terminal({
+      cursorBlink: true,
+      macOptionIsMeta: true,
+      fontSize: 14,
+      theme: {
+        background: '#121212',
+        foreground: '#f8f8f2',
+        cursor: '#50fa7b'
+      }
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+
+    // Open terminal inside the UI container
+    term.open(document.getElementById('terminal-container'));
+    fitAddon.fit();
+
+    // 2. Setup WebSocket Connection with JWT Auth Token
+    // In production, inject your dynamically generated JWT token here
+    const token = "your_test_or_user_jwt_token_here";
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const host = window.location.host || 'localhost:3000';
+    const wsUrl = `${protocol}${host}?token=${encodeURIComponent(token)}`;
+
+    const ws = new WebSocket(wsUrl);
+    ws.binaryType = 'arraybuffer';
+
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+
+    ws.onopen = () => {
+      statusDot.style.backgroundColor = '#2ecc71'; // Green: Connected
+      statusText.textContent = 'Connected (Secure Sandbox)';
+      fitAddon.fit();
+      // Send initial sizing to backend PTY
+      sendResize();
+    };
+
+    ws.onclose = () => {
+      statusDot.style.backgroundColor = '#e74c3c'; // Red: Disconnected
+      statusText.textContent = 'Disconnected - Reconnecting...';
+      term.writeln('\r\n\x1b[31m[Connection lost. Attempting to reconnect...]\x1b[0m');
+    };
+
+    ws.onerror = () => {
+      statusDot.style.backgroundColor = '#e74c3c';
+      statusText.textContent = 'Connection Error';
+    };
+
+    // 3. Handle data coming from backend PTY -> render in xterm.js
+    ws.onmessage = (event) => {
+      if (event.data instanceof ArrayBuffer) {
+        term.write(new Uint8Array(event.data));
+      } else {
+        term.write(event.data);
+      }
+    };
+
+    // 4. Handle user input in xterm.js -> send to backend PTY
+    term.onData((data) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'input', data: data }));
+      }
+    });
+
+    // 5. Dynamic Resize Handling (Crucial for iPhone orientation shifts/keyboards)
+    function sendResize() {
+      if (ws.readyState === WebSocket.OPEN) {
+        fitAddon.fit();
+        ws.send(JSON.stringify({
+          type: 'resize',
+          cols: term.cols,
+          rows: term.rows
+        }));
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      sendResize();
+    });
+
+    // Handle mobile visual viewport changes (e.g., virtual keyboard pop-ups)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        setTimeout(sendResize, 100);
+      });
+    }
+  </script>
+</body>
+</html>
