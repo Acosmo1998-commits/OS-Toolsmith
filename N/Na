@@ -1,0 +1,13 @@
+    <!-- Admin Dashboard Viewport Container -->
+    <div id="admin-container" class="view-panel" style="display: none; padding: 16px; box-sizing: border-box; background: #151515; overflow-y: auto;">
+      <h3>🛠️ System Admin Control Panel</h3>
+      <p style="color: #888; font-size: 13px;">Restricted background metrics & container oversight.</p>
+      
+      <div id="admin-metrics-card" style="background: #222; border: 1px solid #333; border-radius: 6px; padding: 14px; margin-top: 15px;">
+        Loading system metrics...
+      </div>
+
+      <button onclick="triggerMaintenance()" style="margin-top: 20px; background: #c0392b; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">
+        Trigger Container Maintenance Check
+      </button>
+    </div>
