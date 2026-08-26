@@ -1,0 +1,58 @@
+const fs = require('fs');
+const path = require('path');
+
+// Middleware to parse JSON bodies for file editing
+app.use(express.json());
+
+// Helper to ensure paths stay strictly inside the isolated /workspace sandbox
+const getSafePath = (userPath) => {
+  const safeBase = path.resolve('/workspace');
+  const targetPath = path.resolve(safeBase, userPath || '');
+  if (!targetPath.startsWith(safeBase)) {
+    throw new Error('Unauthorized path traversal attempt');
+  }
+  return targetPath;
+};
+
+// 1. List directory contents
+app.get('/api/files', (req, res) => {
+  try {
+    const dirPath = getSafePath(req.query.path);
+    if (!fs.existsSync(dirPath)) return res.status(404).json({ error: 'Directory not found' });
+
+    const items = fs.readdirSync(dirPath, { withFileTypes: true }).map(item => ({
+      name: item.name,
+      isDirectory: item.isDirectory(),
+      path: path.relative('/workspace', path.join(dirPath, item.name))
+    }));
+    res.json(items);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// 2. Read file contents for editing
+app.get('/api/file', (req, res) => {
+  try {
+    const filePath = getSafePath(req.query.path);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' });
+
+    const content = fs.readFileSync(filePath, 'utf8');
+    res.json({ content });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// 3. Save/Write file contents
+app.post('/api/file', (req, res) => {
+  try {
+    const { filePath, content } = req.body;
+    const targetPath = getSafePath(filePath);
+
+    fs.writeFileSync(targetPath, content, 'utf8');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
