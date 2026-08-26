@@ -1,0 +1,25 @@
+os-toolsmith-backend/
+├── package.json
+├── server.js
+├── Dockerfile
+└── docker-compose.yml
+---
+
+### 1. `package.json`
+```json
+{
+  "name": "os-toolsmith-backend",
+  "version": "1.0.0",
+  "description": "Secure isolated PTY backend for OS Toolsmith PWA",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "node-pty": "^1.0.0",
+    "ws": "^8.16.0"
+  }
+}
+
