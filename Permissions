@@ -1,0 +1,68 @@
+  // Example tokens (In production, load these dynamically from your auth login flow)
+  let userRole = 'admin'; // Change to 'user' to test permission blocking
+  let adminJwtToken = "your_admin_jwt_token_here";
+
+  // Check role on startup to show/hide Admin tab
+  function initAuthUI() {
+    if (userRole === 'admin') {
+      document.getElementById('btn-admin').style.display = 'inline-block';
+    }
+  }
+  // Run on load
+  initAuthUI();
+
+  // Extend your existing switchTab function to handle 'admin'
+  function switchTab(tab) {
+    document.getElementById('terminal-container').style.display = tab === 'terminal' ? 'flex' : 'none';
+    document.getElementById('file-container').style.display = tab === 'files' ? 'flex' : 'none';
+    document.getElementById('admin-container').style.display = tab === 'admin' ? 'block' : 'none';
+    
+    document.getElementById('btn-terminal').className = tab === 'terminal' ? 'active-tab' : '';
+    document.getElementById('btn-files').className = tab === 'files' ? 'active-tab' : '';
+    document.getElementById('btn-admin').className = tab === 'admin' ? 'active-tab' : '';
+    
+    if (tab === 'files') {
+      loadFiles(currentPath);
+    } else if (tab === 'admin') {
+      loadAdminMetrics();
+    } else {
+      setTimeout(() => fitAddon.fit(), 50);
+    }
+  }
+
+  async function loadAdminMetrics() {
+    const card = document.getElementById('admin-metrics-card');
+    card.innerHTML = 'Fetching telemetry...';
+    try {
+      const res = await fetch('/api/admin/metrics', {
+        headers: { 'Authorization': `Bearer ${adminJwtToken}` }
+      });
+      if (!res.ok) throw new Error('Unauthorized or forbidden');
+      
+      const data = await res.json();
+      card.innerHTML = `
+        <p><strong>Status:</strong> <span style="color: #2ecc71;">${data.status}</span></p>
+        <p><strong>Uptime:</strong> ${data.serverUptimeSeconds} seconds</p>
+        <p><strong>Memory (RSS):</strong> ${data.memoryRSSMB} MB</p>
+        <p><strong>Memory (Heap):</strong> ${data.memoryHeapMB} MB</p>
+        <p><strong>Runtime:</strong> Node ${data.nodeVersion} (${data.platform})</p>
+        <p><strong>Authenticated Admin:</strong> ${data.activeUser}</p>
+      `;
+    } catch (err) {
+      card.innerHTML = `<span style="color: #e74c3c;">Access Denied: Admin role required.</span>`;
+    }
+  }
+
+  async function triggerMaintenance() {
+    if (!confirm('Are you sure you want to run backend maintenance?')) return;
+    try {
+      const res = await fetch('/api/admin/maintenance', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminJwtToken}` }
+      });
+      const data = await res.json();
+      alert(data.message || 'Action executed successfully.');
+    } catch (err) {
+      alert('Failed to execute admin action.');
+    }
+  }
