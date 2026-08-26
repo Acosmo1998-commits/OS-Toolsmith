@@ -1,0 +1,81 @@
+  let currentPath = '';
+  let activeEditingFile = '';
+  const jwtToken = "your_test_or_user_jwt_token_here"; // Same token used for WS
+
+  function switchTab(tab) {
+    document.getElementById('terminal-container').style.display = tab === 'terminal' ? 'flex' : 'none';
+    document.getElementById('file-container').style.display = tab === 'files' ? 'flex' : 'none';
+    document.getElementById('btn-terminal').className = tab === 'terminal' ? 'active-tab' : '';
+    document.getElementById('btn-files').className = tab === 'files' ? 'active-tab' : '';
+    
+    if (tab === 'files') {
+      loadFiles('');
+    } else {
+      setTimeout(() => fitAddon.fit(), 50);
+    }
+  }
+
+  async function loadFiles(path) {
+    try {
+      const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`, {
+        headers: { 'Authorization': `Bearer ${jwtToken}` }
+      });
+      const items = await res.json();
+      currentPath = path;
+      
+      document.getElementById('file-breadcrumb.textContent = `/workspace/${path}`;
+      const listEl = document.getElementById('file-list');
+      listEl.innerHTML = '';
+
+      if (path !== '') {
+        const parentPath = path.split('/').slice(0, -1).join('/');
+        listEl.innerHTML += `<div class="file-item" onclick="loadFiles('${parentPath}')">📁 <strong>.. (Up)</strong></div>`;
+      }
+
+      items.forEach(item => {
+        const icon = item.isDirectory ? '📁' : '📄';
+        const action = item.isDirectory ? `loadFiles('${item.path}')` : `openFile('${item.path}')`;
+        listEl.innerHTML += `<div class="file-item" onclick="${action}"><span>${icon} ${item.name}</span></div>`;
+      });
+    } catch (err) {
+      console.error('Failed to load files', err);
+    }
+  }
+
+  async function openFile(filePath) {
+    try {
+      const res = await fetch(`/api/file?path=${encodeURIComponent(filePath)}`, {
+        headers: { 'Authorization': `Bearer ${jwtToken}` }
+      });
+      const data = await res.json();
+      activeEditingFile = filePath;
+      
+      document.getElementById('editing-filename').textContent = filePath;
+      document.getElementById('file-textarea').value = data.content;
+      document.getElementById('editor-pane').style.display = 'flex';
+    } catch (err) {
+      alert('Could not open file');
+    }
+  }
+
+  async function saveFile() {
+    try {
+      const content = document.getElementById('file-textarea').value;
+      await fetch('/api/file', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        },
+        body: JSON.stringify({ filePath: activeEditingFile, content })
+      });
+      alert('Saved successfully!');
+    } catch (err) {
+      alert('Failed to save file');
+    }
+  }
+
+  function closeEditor() {
+    document.getElementById('editor-pane').style.display = 'none';
+    activeEditingFile = '';
+  }
